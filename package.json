@@ -10,7 +10,8 @@
     "start": "node src/main.ts",
     "pool": "node src/pool-cli.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --test-force-exit --test-reporter=spec test/*.test.ts"
+    "test": "node --test --test-force-exit --test-reporter=spec test/*.test.ts",
+    "lint:arch": "scripts/check-architecture.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2"

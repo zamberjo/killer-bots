@@ -10,15 +10,15 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, test } from 'node:test';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { loadConfig } from '../src/config.ts';
-import { ensurePool } from '../src/pool.ts';
-import { Supervisor } from '../src/supervisor.ts';
+import { compose } from '../src/composition.ts';
+import { loadConfig } from '../src/infrastructure/config.ts';
 
 const config = loadConfig();
 const RUN = randomUUID().slice(0, 8);
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
 const admin = createClient(config.url, config.secretKey, options);
-const supervisor = new Supervisor(config);
+// La aplicación de verdad, con sus adaptadores de verdad.
+const { ensurePool, supervisor } = compose(config);
 
 let host: SupabaseClient;
 let hostId: string;
@@ -34,8 +34,8 @@ async function waitFor<T>(what: string, check: () => Promise<T | undefined | fal
 }
 
 before(async () => {
-  const accounts = await ensurePool(config);
-  await supervisor.start(accounts, 500);
+  const pool = await ensurePool.execute(config.poolSize);
+  await supervisor.start(pool, 500);
 
   host = createClient(config.url, config.publishableKey, options);
   const { data, error } = await host.auth.signUp({
@@ -109,10 +109,11 @@ test('al vencer la ventana, los bots llenan los huecos y la partida arranca', as
     return inMatch.length === 3 ? inMatch : undefined;
   });
   for (const agent of agents) {
-    const mine = await agent.bot.liveMatch();
-    assert.equal(mine?.match.id, matchId);
-    assert.equal(mine?.me.is_bot, true);
-    assert.ok(mine?.target, `${agent.bot.username} tiene objetivo: está en la rueda`);
+    const mine = await agent.session.liveMatch();
+    assert.equal(mine?.matchId, matchId);
+    assert.equal(mine?.isBot, true);
+    assert.equal(mine?.status, 'active');
+    assert.ok(mine?.hasTarget, `${agent.session.bot.username} tiene objetivo: está en la rueda`);
   }
 
   // --- Sin partida, el supervisor los suelta ---------------------------------
