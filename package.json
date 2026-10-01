@@ -1,0 +1,22 @@
+{
+  "name": "killer-bots",
+  "private": true,
+  "type": "module",
+  "description": "Simulador de teléfonos de Killer: bots que juegan como clientes reales (docs/adr/0010).",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "pool": "node src/pool-cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --test-force-exit --test-reporter=spec test/*.test.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
