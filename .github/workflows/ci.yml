@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Tipos y E2E contra Supabase real
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # El backend vive en su propio repositorio, privado. Se lee con una deploy
+      # key de solo lectura sobre killer-backend (secreto BACKEND_DEPLOY_KEY),
+      # como en killer-mobile.
+      - name: Traer las migraciones del backend
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.BACKEND_REPO || 'zamberjo/killer-backend' }}
+          ssh-key: ${{ secrets.BACKEND_DEPLOY_KEY }}
+          path: .backend
+
+      - name: Comprobar que son las migraciones del backend
+        run: |
+          if ! ls .backend/supabase/migrations/*.sql > /dev/null 2>&1; then
+            echo "::error::.backend no trae supabase/migrations: no se ha clonado killer-backend. Revisa BACKEND_REPO y el secreto BACKEND_DEPLOY_KEY."
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Levantar Supabase con el esquema real
+        working-directory: .backend
+        run: supabase start
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+
+      - name: E2E
+        env:
+          BACKEND_DIR: .backend
+        run: npm test
+
+      - name: Parar Supabase
+        if: always()
+        working-directory: .backend
+        run: supabase stop --no-backup
