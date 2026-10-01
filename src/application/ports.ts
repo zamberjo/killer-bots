@@ -2,7 +2,10 @@
 // Los adaptadores de `infrastructure/` los implementan; la composición
 // (`src/composition.ts`) los conecta.
 
-import type { BotProfile, MatchAssignment, MatchStatus } from '../domain/bot.ts';
+import type {
+  BotProfile, CityMap, MatchAssignment, MatchStatus, Reading, ReportOutcome, Zone,
+} from '../domain/bot.ts';
+import type { LocalTime, Movement } from '../domain/routine.ts';
 
 /** Dónde están dadas de alta las cuentas de los bots (Auth, con privilegios). */
 export interface BotRegistry {
@@ -29,11 +32,43 @@ export interface GameSession {
   liveMatch(): Promise<MatchAssignment | null>;
   /** Escucha los cambios de estado de una partida. */
   watchMatch(matchId: string, onStatus: (status: MatchStatus) => void): Promise<MatchWatch>;
+  /** Envía una lectura como cualquier cliente (`rpc_report_position`). */
+  reportPosition(matchId: string, reading: Reading, measuredAt: Date): Promise<ReportOutcome>;
   close(): Promise<void>;
 }
 
 export interface MatchWatch {
   stop(): Promise<void>;
+}
+
+/**
+ * El mundo simulado: calles, casas y el GPS de cada bot. Toda su geometría la
+ * hace PostGIS (esquema `sim`); aquí no se mide nada (AGENTS.md §3).
+ */
+export interface SimWorld {
+  hasMap(matchId: string): Promise<boolean>;
+  loadMap(matchId: string, map: CityMap): Promise<void>;
+  /** Pone al bot en el mapa (una casa, la calle más cercana). Idempotente. */
+  spawn(playerId: string): Promise<Reading>;
+  /** Mueve al bot `meters` según `movement` y devuelve la lectura de su GPS. */
+  step(playerId: string, meters: number, movement: Exclude<Movement, 'silent'>): Promise<Reading>;
+}
+
+/** De dónde salen las calles y los edificios de una zona. */
+export interface MapSource {
+  /** Un mapa vacío si no hay datos: entonces los bots pasean en recto. */
+  fetch(zone: Zone): Promise<CityMap>;
+}
+
+/** La hora: la real, para las lecturas, y la local, para la rutina. */
+export interface Clock {
+  now(): Date;
+  local(): LocalTime;
+}
+
+/** Azar en [0, 1). */
+export interface Random {
+  next(): number;
 }
 
 export interface Logger {

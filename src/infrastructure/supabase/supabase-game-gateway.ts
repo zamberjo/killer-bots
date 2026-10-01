@@ -7,12 +7,14 @@
 
 import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js';
 import type { GameGateway, GameSession, MatchWatch } from '../../application/ports.ts';
-import type { BotProfile, MatchAssignment, MatchStatus } from '../../domain/bot.ts';
+import type {
+  BotProfile, MatchAssignment, MatchStatus, Reading, ReportOutcome, Zone,
+} from '../../domain/bot.ts';
 
 /** `{ match, me, target }` de `rpc_get_my_live_match`, lo que se usa. */
 interface LiveMatchDto {
-  match: { id: string; status: MatchStatus };
-  me: { is_bot: boolean };
+  match: { id: string; status: MatchStatus; zone: Zone };
+  me: { id: string; is_bot: boolean };
   target: { is_bot: boolean } | null;
 }
 
@@ -52,7 +54,9 @@ class SupabaseGameSession implements GameSession {
     if (!live) return null;
     return {
       matchId: live.match.id,
+      playerId: live.me.id,
       status: live.match.status,
+      zone: live.match.zone,
       isBot: live.me.is_bot,
       hasTarget: live.target !== null,
       targetIsBot: live.target?.is_bot ?? null,
@@ -78,6 +82,23 @@ class SupabaseGameSession implements GameSession {
         await this.client.removeChannel(channel);
       },
     };
+  }
+
+  async reportPosition(matchId: string, reading: Reading, measuredAt: Date): Promise<ReportOutcome> {
+    const { data, error } = await this.client.rpc('rpc_report_position', {
+      p_match_id: matchId,
+      p_lat: reading.lat,
+      p_lon: reading.lon,
+      p_accuracy_m: reading.accuracyM,
+      p_altitude_m: reading.altitudeM,
+      p_measured_at: measuredAt.toISOString(),
+    });
+    if (error) throw new Error(`rpc_report_position (${this.bot.username}): ${error.message}`);
+    const r = data as {
+      accepted: boolean; rejected_reason: string | null; in_zone: boolean | null;
+      phase: ReportOutcome['phase'];
+    };
+    return { accepted: r.accepted, rejectedReason: r.rejected_reason, inZone: r.in_zone, phase: r.phase };
   }
 
   async close(): Promise<void> {

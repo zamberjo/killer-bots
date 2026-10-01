@@ -12,13 +12,48 @@ export interface BotProfile {
 
 export type MatchStatus = 'recruiting' | 'active' | 'finished' | 'cancelled';
 
+/** Polígono GeoJSON, `[lon, lat]`. Para el bot es un dato que se pasa, no se mide. */
+export interface Zone {
+  readonly type: 'Polygon';
+  readonly coordinates: ReadonlyArray<ReadonlyArray<readonly [number, number]>>;
+}
+
+/** Calles y edificios de una zona, como los da OpenStreetMap. */
+export interface CityMap {
+  /** Cada calle, como lista de puntos `[lon, lat]`. */
+  readonly ways: ReadonlyArray<ReadonlyArray<readonly [number, number]>>;
+  /** Un punto `[lon, lat]` por edificio. */
+  readonly buildings: ReadonlyArray<readonly [number, number]>;
+}
+
+/** Lo que mide el «GPS» de un bot: cruda, como la de un teléfono. */
+export interface Reading {
+  readonly lat: number;
+  readonly lon: number;
+  readonly accuracyM: number;
+  readonly altitudeM: number;
+}
+
+/** Lo que responde el servidor a una lectura (`rpc_report_position`). */
+export interface ReportOutcome {
+  readonly accepted: boolean;
+  readonly rejectedReason: string | null;
+  /** Lo decide el servidor; null si aún no hay ninguna lectura aceptada. */
+  readonly inZone: boolean | null;
+  readonly phase: 'far' | 'approaching' | 'in_aura';
+}
+
 /**
  * La partida viva de un bot, tal como la cuenta el servidor
  * (`rpc_get_my_live_match`). Solo lo que el bot necesita para comportarse.
  */
 export interface MatchAssignment {
   readonly matchId: string;
+  /** El jugador del bot en esta partida (`players.id`). */
+  readonly playerId: string;
   readonly status: MatchStatus;
+  /** La zona de juego, tal como la manda el servidor. El bot no la mide. */
+  readonly zone: Zone;
   readonly isBot: boolean;
   /** Tiene víctima asignada: está en la rueda. Su identidad no hace falta aún. */
   readonly hasTarget: boolean;
