@@ -17,6 +17,15 @@ export interface Config {
   poolSize: number;
   /** Cada cuánto mira cada bot si está en una partida. */
   pollMs: number;
+  /** Cada cuánto decide y reporta un bot en partida. */
+  tickMs: number;
+  /** Zona horaria de la rutina de los bots. */
+  timeZone: string;
+  /** Hora local fija para la rutina (pruebas, desarrollo de noche), o null. */
+  forceHour: number | null;
+  /** Mapa de un fichero en vez de Overpass (pruebas, sin red), o null. */
+  mapFile: string | null;
+  overpassUrl: string;
 }
 
 function readStatus(backendDir: string): Record<string, string> {
@@ -67,5 +76,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     botsSecret,
     poolSize: Number(env.BOTS_POOL_SIZE ?? 30),
     pollMs: Number(env.BOTS_POLL_MS ?? 15_000),
+    tickMs: Number(env.BOTS_TICK_MS ?? 20_000),
+    timeZone: env.BOTS_TIMEZONE ?? 'Europe/Madrid',
+    forceHour: env.BOTS_FORCE_HOUR ? Number(env.BOTS_FORCE_HOUR) : null,
+    mapFile: env.BOTS_MAP_FILE ?? null,
+    overpassUrl: env.BOTS_OVERPASS_URL ?? 'https://overpass-api.de/api/interpreter',
   };
 }

@@ -18,6 +18,12 @@ x-bots: &bots
     BOTS_SECRET: ${BOTS_SECRET:-killer-bots-local-only}
     BOTS_POOL_SIZE: ${BOTS_POOL_SIZE:-30}
     BOTS_POLL_MS: ${BOTS_POLL_MS:-15000}
+    BOTS_TICK_MS: ${BOTS_TICK_MS:-20000}
+    BOTS_TIMEZONE: ${BOTS_TIMEZONE:-Europe/Madrid}
+    # Vacías = sin forzar: la hora real y el mapa de OpenStreetMap.
+    BOTS_FORCE_HOUR: ${BOTS_FORCE_HOUR:-}
+    BOTS_MAP_FILE: ${BOTS_MAP_FILE:-}
+    BOTS_OVERPASS_URL: ${BOTS_OVERPASS_URL:-https://overpass-api.de/api/interpreter}
   networks: [supabase]
   # El código se monta: un cambio en src/ o test/ no obliga a reconstruir.
   volumes:
