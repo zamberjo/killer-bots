@@ -1,21 +1,19 @@
-# El simulador sin instalar Node: `./bots.sh <orden>` (ver README).
+# El simulador sin instalar Node: `./bots.sh [--linked] <orden>` (ver README).
 #
-# Se conecta al Supabase local POR DENTRO de Docker: se une a la red que crea
-# `supabase start` en ../backend y habla con su pasarela (kong) por nombre, en
-# vez de salir al puerto del host. Las claves no están aquí: las exporta
-# bots.sh desde `supabase status` y llegan por entorno.
+# Este fichero vale para cualquier Supabase: la URL y las claves llegan por
+# entorno, y las pone bots.sh. Para el Supabase local, bots.sh añade además
+# compose.local.yaml, que une el contenedor a la red de `supabase start`.
 
 x-bots: &bots
   build: .
   image: killer-bots
   environment:
-    SUPABASE_URL: http://supabase_kong_${SUPABASE_PROJECT:-backend}:8000
-    SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?ejecuta con ./bots.sh, que lee las claves de supabase status}
-    SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?ejecuta con ./bots.sh, que lee las claves de supabase status}
-    # La URL no es localhost, así que el simulador exige secreto. Contra una
-    # base local vale el mismo que usa fuera de Docker: las contraseñas de los
-    # bots coinciden se ejecute como se ejecute.
-    BOTS_SECRET: ${BOTS_SECRET:-killer-bots-local-only}
+    SUPABASE_URL: ${SUPABASE_URL:?ejecuta con ./bots.sh}
+    SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?ejecuta con ./bots.sh}
+    SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?ejecuta con ./bots.sh}
+    # Sin valor por defecto a propósito: contra un proyecto de verdad, una
+    # contraseña de bot conocida es una cuenta abierta. bots.sh la pone.
+    BOTS_SECRET: ${BOTS_SECRET:?ejecuta con ./bots.sh}
     BOTS_POOL_SIZE: ${BOTS_POOL_SIZE:-30}
     BOTS_POLL_MS: ${BOTS_POLL_MS:-15000}
     BOTS_TICK_MS: ${BOTS_TICK_MS:-20000}
@@ -24,7 +22,6 @@ x-bots: &bots
     BOTS_FORCE_HOUR: ${BOTS_FORCE_HOUR:-}
     BOTS_MAP_FILE: ${BOTS_MAP_FILE:-}
     BOTS_OVERPASS_URL: ${BOTS_OVERPASS_URL:-https://overpass-api.de/api/interpreter}
-  networks: [supabase]
   # El código se monta: un cambio en src/ o test/ no obliga a reconstruir.
   volumes:
     - ./src:/app/src:ro
@@ -43,8 +40,3 @@ services:
     <<: *bots
     profiles: [tools]
     command: ["npm", "run", "pool"]
-
-networks:
-  supabase:
-    name: supabase_network_${SUPABASE_PROJECT:-backend}
-    external: true
