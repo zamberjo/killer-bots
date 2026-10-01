@@ -57,7 +57,11 @@ jobs:
           BACKEND_DIR: .backend
         run: npm test
 
+      # Si un paso anterior falló, puede que ni el CLI ni .backend existan: sin
+      # esta guarda, el fallo real quedaba tapado por un «command not found».
       - name: Parar Supabase
         if: always()
-        working-directory: .backend
-        run: supabase stop --no-backup
+        run: |
+          if command -v supabase > /dev/null && [ -d .backend ]; then
+            cd .backend && supabase stop --no-backup
+          fi
