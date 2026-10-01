@@ -29,5 +29,10 @@ Arquitectura hexagonal (ver `README.md`, «Estructura»):
 `npm run lint:arch` lo vigila.
 
 ```bash
-npm ci && npm run typecheck && npm run lint:arch && npm test   # requiere `supabase start` en ../backend
+./bots.sh check && ./bots.sh test   # en Docker, sin Node; requiere `supabase start` en ../backend
+npm ci && npm run typecheck && npm run lint:arch && npm test   # lo mismo con Node instalado
 ```
+
+En Docker (`compose.yaml`), el contenedor se une a la red
+`supabase_network_<project_id>` y habla con `supabase_kong_<project_id>:8000`;
+las claves las exporta `bots.sh` desde `supabase status`.

@@ -25,7 +25,28 @@ que escucha el canal de esa partida. Todavía no se mueven ni matan.
 
 ## Uso
 
-Requiere el backend local arrancado (`supabase start` en `../backend`) y
+### Con Docker (sin instalar Node)
+
+Requiere Docker y el backend local arrancado (`supabase start` en
+`../backend`). `bots.sh` lee las claves de `supabase status` y se las pasa al
+contenedor por entorno; el contenedor se une a la red de Supabase y le habla
+por dentro de Docker.
+
+```bash
+./bots.sh up          # bots conectados, en segundo plano
+./bots.sh logs        # sus logs (Ctrl+C para salir)
+./bots.sh down        # pararlos
+./bots.sh pool [N]    # dar de alta los bots que falten y salir
+./bots.sh test        # e2e contra el Supabase local
+./bots.sh check       # tipos y capas, lo que exige el CI
+```
+
+El código se monta en el contenedor: un cambio en `src/` o `test/` no obliga a
+reconstruir la imagen. Un cambio de dependencias, sí (`bots.sh` reconstruye en
+`up`, `pool`, `test` y `check`).
+
+### Con Node instalado
+
 Node ≥ 22.18, que ejecuta TypeScript sin compilar.
 
 ```bash
@@ -33,7 +54,7 @@ npm ci
 npm run pool          # da de alta los bots que falten (30 por defecto) y termina
 npm start             # los mantiene jugando hasta Ctrl+C
 npm test              # e2e contra el Supabase local
-npm run typecheck
+npm run typecheck && npm run lint:arch
 ```
 
 Las claves se leen de `supabase status` en `../backend` (o en `BACKEND_DIR`).
