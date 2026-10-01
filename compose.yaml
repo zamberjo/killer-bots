@@ -1,0 +1,44 @@
+# El simulador sin instalar Node: `./bots.sh <orden>` (ver README).
+#
+# Se conecta al Supabase local POR DENTRO de Docker: se une a la red que crea
+# `supabase start` en ../backend y habla con su pasarela (kong) por nombre, en
+# vez de salir al puerto del host. Las claves no están aquí: las exporta
+# bots.sh desde `supabase status` y llegan por entorno.
+
+x-bots: &bots
+  build: .
+  image: killer-bots
+  environment:
+    SUPABASE_URL: http://supabase_kong_${SUPABASE_PROJECT:-backend}:8000
+    SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?ejecuta con ./bots.sh, que lee las claves de supabase status}
+    SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?ejecuta con ./bots.sh, que lee las claves de supabase status}
+    # La URL no es localhost, así que el simulador exige secreto. Contra una
+    # base local vale el mismo que usa fuera de Docker: las contraseñas de los
+    # bots coinciden se ejecute como se ejecute.
+    BOTS_SECRET: ${BOTS_SECRET:-killer-bots-local-only}
+    BOTS_POOL_SIZE: ${BOTS_POOL_SIZE:-30}
+    BOTS_POLL_MS: ${BOTS_POLL_MS:-15000}
+  networks: [supabase]
+  # El código se monta: un cambio en src/ o test/ no obliga a reconstruir.
+  volumes:
+    - ./src:/app/src:ro
+    - ./test:/app/test:ro
+    - ./scripts:/app/scripts:ro
+
+services:
+  # `./bots.sh up`: los bots conectados, hasta que se paren.
+  bots:
+    <<: *bots
+    command: ["npm", "start"]
+    restart: unless-stopped
+
+  # Órdenes sueltas: `./bots.sh pool | test | check`.
+  tools:
+    <<: *bots
+    profiles: [tools]
+    command: ["npm", "run", "pool"]
+
+networks:
+  supabase:
+    name: supabase_network_${SUPABASE_PROJECT:-backend}
+    external: true
