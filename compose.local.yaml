@@ -1,0 +1,18 @@
+# Contra el Supabase LOCAL (`supabase start` en ../backend): el contenedor se
+# une a su red y le habla por dentro de Docker, a su pasarela (kong), en vez de
+# salir al puerto del host. bots.sh lo añade salvo con --linked.
+
+services:
+  bots:
+    environment:
+      SUPABASE_URL: http://supabase_kong_${SUPABASE_PROJECT:-backend}:8000
+    networks: [supabase]
+  tools:
+    environment:
+      SUPABASE_URL: http://supabase_kong_${SUPABASE_PROJECT:-backend}:8000
+    networks: [supabase]
+
+networks:
+  supabase:
+    name: supabase_network_${SUPABASE_PROJECT:-backend}
+    external: true

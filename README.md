@@ -57,6 +57,26 @@ por dentro de Docker.
 
 Para verlos pasear a cualquier hora: `BOTS_FORCE_HOUR=11 ./bots.sh up`.
 
+### Contra el proyecto enlazado (`supabase link`)
+
+Las mismas órdenes con `--linked` delante, salvo `test` y `check`, que solo
+corren en local (los e2e borran usuarios y adelantan ventanas):
+
+```bash
+./bots.sh --linked pool    # da de alta los bots en el proyecto remoto
+./bots.sh --linked up      # (y logs, down)
+```
+
+- El proyecto es el enlazado en `../backend` (`supabase/.temp/project-ref`) y
+  las claves salen de `supabase projects api-keys --reveal`: hace falta
+  `supabase login`. Las claves no se escriben en ningún fichero.
+- La primera vez se genera `.env.linked` con el secreto del que salen las
+  contraseñas de los bots (fuera de git). **Consérvalo**, y cópialo si lanzas
+  los bots desde otra máquina: con otro secreto, los bots ya creados no podrán
+  entrar.
+- El proyecto remoto tiene que tener todas las migraciones del backend,
+  `00013_sim` incluida: `cd ../backend && supabase db push`.
+
 El código se monta en el contenedor: un cambio en `src/` o `test/` no obliga a
 reconstruir la imagen. Un cambio de dependencias, sí (`bots.sh` reconstruye en
 `up`, `pool`, `test` y `check`).
