@@ -14,6 +14,20 @@ decisión que define este repositorio es el ADR 0010 (`../docs/adr/0010-bots.md`
   que van en español como en el resto del proyecto. Conventional Commits con
   ámbito de módulo (`feat(supervisor):`, `fix(pool):`).
 
+## Capas
+
+Arquitectura hexagonal (ver `README.md`, «Estructura»):
+
+- `src/domain/` — TypeScript puro. Sin paquetes, sin `node:*`.
+- `src/application/` — casos de uso y los **puertos** (`ports.ts`). Solo
+  importa `domain/`. Un caso de uso nuevo pide lo que necesita como puerto;
+  nunca un cliente de Supabase.
+- `src/infrastructure/` — los adaptadores. La traducción del contrato RPC
+  (`docs/rpc-contract.md`) al dominio vive aquí y solo aquí.
+- `src/composition.ts` — el único sitio que conecta adaptadores y casos de uso.
+
+`npm run lint:arch` lo vigila.
+
 ```bash
-npm ci && npm run typecheck && npm test   # requiere `supabase start` en ../backend
+npm ci && npm run typecheck && npm run lint:arch && npm test   # requiere `supabase start` en ../backend
 ```

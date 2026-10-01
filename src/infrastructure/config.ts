@@ -1,4 +1,4 @@
-// Configuración del simulador.
+// Configuración del simulador (adaptador de entrada: entorno y `supabase status`).
 //
 // Las claves llegan por entorno. En local, si no están, se leen de `supabase
 // status` en el backend —igual que mobile/run_e2e.sh y backend/e2e—: ninguna

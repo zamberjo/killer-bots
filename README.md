@@ -48,12 +48,21 @@ También pueden llegar por entorno:
 
 Ninguna clave se escribe en el repositorio.
 
-## Estructura
+## Estructura: hexagonal
 
-| Fichero | Qué hace |
-| --- | --- |
-| `src/pool.ts` | El grupo de bots: alta idempotente con la clave de servicio. |
-| `src/bot.ts` | Un bot: su sesión y sus llamadas, como un cliente cualquiera. |
-| `src/supervisor.ts` | Conecta a los bots y levanta o retira agentes según lo que diga el servidor. |
-| `src/agent.ts` | Un bot dentro de una partida. En MB2, su máquina de estados. |
-| `test/fill.test.ts` | E2E: una partida con bots arranca con ellos y el supervisor se entera. |
+Tres capas y una raíz de composición. Las dependencias apuntan siempre hacia
+dentro: `infrastructure → application → domain`.
+
+| Capa | Qué hay | Puede importar |
+| --- | --- | --- |
+| `src/domain/` | Qué es un bot (`BotProfile`, el grupo) y qué sabe de su partida (`MatchAssignment`). TypeScript puro. | Solo `domain/` |
+| `src/application/` | Casos de uso (`EnsurePool`, `Supervisor`, `Agent`) y los **puertos** que necesitan (`ports.ts`: `BotRegistry`, `Credentials`, `GameGateway`/`GameSession`, `Logger`). | `domain/` y `application/` |
+| `src/infrastructure/` | Adaptadores: Supabase (alta de bots con la clave de servicio, sesión de juego de cada bot), contraseñas por HMAC, configuración, log. | Todo |
+| `src/composition.ts` | Conecta los casos de uso con sus adaptadores. `main.ts` y `pool-cli.ts` solo arrancan. | Todo |
+
+`npm run lint:arch` (también en el CI) falla si `domain/` o `application/`
+importan algo que no les toca, incluido cualquier paquete.
+
+El e2e (`test/fill.test.ts`) prueba la aplicación compuesta de verdad contra
+el Supabase local: una partida con bots arranca con ellos y el supervisor se
+entera.
