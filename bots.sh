@@ -5,6 +5,7 @@
 #   ./bots.sh [--linked] logs      # sus logs (Ctrl+C para salir)
 #   ./bots.sh [--linked] down      # pararlos
 #   ./bots.sh [--linked] pool [N]  # dar de alta los bots que falten y salir
+#   ./bots.sh [--linked] tester <email> [--revoke]  # rol de probador (ADR 0014)
 #   ./bots.sh test                 # e2e contra el Supabase local
 #   ./bots.sh check                # tipos y capas (lo que exige el CI)
 #
@@ -93,7 +94,8 @@ case "$cmd" in
   logs)  "${compose[@]}" logs -f bots ;;
   down)  "${compose[@]}" down ;;
   pool)  "${compose[@]}" run --rm --build tools npm run pool -- "$@" ;;
+  tester) "${compose[@]}" run --rm --build tools npm run tester -- "$@" ;;
   test)  "${compose[@]}" run --rm --build tools npm test ;;
   check) "${compose[@]}" run --rm --build tools sh -c 'npm run typecheck && npm run lint:arch' ;;
-  *)     sed -n '2,12p' "$0"; exit 2 ;;
+  *)     sed -n '2,13p' "$0"; exit 2 ;;
 esac

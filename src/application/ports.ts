@@ -15,6 +15,16 @@ export interface BotRegistry {
   register(bot: BotProfile, password: string): Promise<void>;
 }
 
+/**
+ * Cuentas de personas, con privilegios: dar o quitar el rol de probador
+ * (docs/adr/0014). Como la marca de bot, va en `app_metadata`, que solo puede
+ * escribir la clave de servicio.
+ */
+export interface AccountAdmin {
+  /** Da o quita el rol. `false` si no existe ninguna cuenta con ese email. */
+  setTester(email: string, on: boolean): Promise<boolean>;
+}
+
 /** De dónde sale la contraseña de cada bot. No se guarda en ningún sitio. */
 export interface Credentials {
   passwordFor(bot: BotProfile): string;

@@ -51,11 +51,22 @@ por dentro de Docker.
 ./bots.sh logs        # sus logs (Ctrl+C para salir)
 ./bots.sh down        # pararlos
 ./bots.sh pool [N]    # dar de alta los bots que falten y salir
+./bots.sh tester <email> [--revoke]   # rol de probador (ver abajo)
 ./bots.sh test        # e2e contra el Supabase local
 ./bots.sh check       # tipos y capas, lo que exige el CI
 ```
 
 Para verlos pasear a cualquier hora: `BOTS_FORCE_HOUR=11 ./bots.sh up`.
+
+### Ver a los bots desde el móvil (rol de probador)
+
+`./bots.sh tester tu@email` da a tu cuenta el rol de probador
+([ADR 0014](https://github.com/zamberjo/killer-docs/blob/main/adr/0014-vista-de-pruebas.md)).
+Con él, la app compilada con `KILLER_DEV_TOOLS=true` puede ver dónde están los
+bots, **solo** en partidas donde eres el único humano: con cualquier otra
+persona dentro, el servidor no devuelve nada. El rol se guarda en
+`app_metadata`, que solo escribe la clave de servicio; desde la app nadie
+puede dárselo. `--revoke` lo quita.
 
 ### Contra el proyecto enlazado (`supabase link`)
 
