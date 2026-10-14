@@ -1,9 +1,11 @@
 name: CI
 
+# Desactivado: solo se lanza a mano desde Actions (docs/adr/0017). Lo mismo
+# corre en local con los hooks de git: scripts/ci.sh fast antes de cada commit
+# y scripts/ci.sh full antes de cada push. Para reactivarlo, devolver aquí
+# `push: branches: [main]` y `pull_request:`.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
