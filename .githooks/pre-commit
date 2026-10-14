@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Lo rápido del CI antes de cada commit (docs/adr/0017). Saltarlo: --no-verify.
+exec "$(git rev-parse --show-toplevel)/scripts/ci.sh" fast

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# El CI entero antes de cada push (docs/adr/0017). Saltarlo: --no-verify.
+exec "$(git rev-parse --show-toplevel)/scripts/ci.sh" full
