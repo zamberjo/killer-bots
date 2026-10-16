@@ -51,6 +51,18 @@ export class SupabaseSimWorld implements SimWorld {
   }
 }
 
+// El mundo simulado da la altitud sobre el nivel del mar, con ±1 m de ruido
+// (`sim.step`): el bot la declara como un iPhone, MSL y con una precisión
+// vertical honrada de 4 m (docs/adr/0020). No sigue el terreno: ver TODO §22.
+const SIM_ALTITUDE_ACCURACY_M = 4;
+
 function toReading(r: ReadingDto): Reading {
-  return { lat: r.lat, lon: r.lon, accuracyM: r.accuracy_m, altitudeM: r.altitude_m };
+  return {
+    lat: r.lat,
+    lon: r.lon,
+    accuracyM: r.accuracy_m,
+    altitudeM: r.altitude_m,
+    altitudeAccuracyM: SIM_ALTITUDE_ACCURACY_M,
+    altitudeRef: 'msl',
+  };
 }

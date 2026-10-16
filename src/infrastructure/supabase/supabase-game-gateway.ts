@@ -91,6 +91,8 @@ class SupabaseGameSession implements GameSession {
       p_lon: reading.lon,
       p_accuracy_m: reading.accuracyM,
       p_altitude_m: reading.altitudeM,
+      p_altitude_accuracy_m: reading.altitudeAccuracyM,
+      p_altitude_ref: reading.altitudeRef,
       p_measured_at: measuredAt.toISOString(),
     });
     if (error) throw new Error(`rpc_report_position (${this.bot.username}): ${error.message}`);
