@@ -37,6 +37,13 @@ cualquiera: un bot no tiene ventajas. Todavía no matan (M6).
 Las calles y los edificios salen de OpenStreetMap (Overpass), filtrados por la
 zona. Si Overpass no responde, los bots pasean en recto entre casas al azar.
 
+La altitud de cada bot sigue el terreno: el servidor elige una rejilla de
+puntos sobre la zona, el simulador pide sus alturas a Open-Meteo (Copernicus
+DEM a 90 m, de 100 en 100) y PostGIS interpola la del suelo donde esté el bot,
+más 1,5 m del teléfono en la mano. Sin eso, en una ciudad a 500 m un bot nunca
+entraría en el aura de una persona (ADR 0020). Si Open-Meteo no responde, la
+altitud es fija (~20 m) hasta el siguiente arranque.
+
 ## Uso
 
 ### Con Docker (sin instalar Node)
@@ -118,6 +125,8 @@ También pueden llegar por entorno:
 | `BOTS_FORCE_HOUR` | Hora local fija para la rutina, p. ej. `11` para verlos pasear de noche. |
 | `BOTS_MAP_FILE` | Mapa de un fichero JSON en vez de Overpass (sin red, pruebas). |
 | `BOTS_OVERPASS_URL` | Otra instancia de Overpass. |
+| `BOTS_ELEVATION_M` | La misma altura del suelo en toda la zona, en vez de Open-Meteo (sin red, pruebas). |
+| `BOTS_ELEVATION_URL` | Otra instancia de la API de elevación de Open-Meteo. |
 
 Ninguna clave se escribe en el repositorio.
 
@@ -130,7 +139,7 @@ dentro: `infrastructure → application → domain`.
 | --- | --- | --- |
 | `src/domain/` | Qué es un bot (`BotProfile`, el grupo) y qué sabe de su partida (`MatchAssignment`). TypeScript puro. | Solo `domain/` |
 | `src/application/` | Casos de uso (`EnsurePool`, `Supervisor`, `Agent`, `MatchMaps`) y los **puertos** que necesitan (`ports.ts`: `BotRegistry`, `Credentials`, `GameGateway`/`GameSession`, `SimWorld`, `MapSource`, `Clock`, `Random`, `Logger`). | `domain/` y `application/` |
-| `src/infrastructure/` | Adaptadores: Supabase (alta de bots y mundo simulado con la clave de servicio; sesión de juego de cada bot), Overpass o un fichero para el mapa, reloj, azar, contraseñas por HMAC, configuración, log. | Todo |
+| `src/infrastructure/` | Adaptadores: Supabase (alta de bots y mundo simulado con la clave de servicio; sesión de juego de cada bot), Overpass o un fichero para el mapa, Open-Meteo o una altura fija para el terreno, reloj, azar, contraseñas por HMAC, configuración, log. | Todo |
 | `src/composition.ts` | Conecta los casos de uso con sus adaptadores. `main.ts` y `pool-cli.ts` solo arrancan. | Todo |
 
 `npm run lint:arch` (también en el CI) falla si `domain/` o `application/`
@@ -143,7 +152,9 @@ detrás de otro (comparten el grupo de bots):
   se entera.
 - `test/walk.test.ts` — a las 11 de un laborable los bots pasean, el servidor
   acepta cada lectura sin un solo `too_fast`, y uno colocado fuera de la zona
-  vuelve cuando el servidor se lo dice.
+  vuelve cuando el servidor se lo dice. Su altitud, vista por un probador
+  (`rpc_get_bot_positions`), es la del terreno cargado más la mano.
 
-El mapa de los e2e es un fichero (`test/fixtures/grid-map.json`): no dependen
-de que Overpass responda.
+El mapa de los e2e es un fichero (`test/fixtures/grid-map.json`) y el terreno
+una altura fija (`BOTS_ELEVATION_M`): no dependen de que Overpass ni Open-Meteo
+respondan.

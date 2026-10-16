@@ -26,6 +26,17 @@ export interface CityMap {
   readonly buildings: ReadonlyArray<readonly [number, number]>;
 }
 
+/** Un punto `{lat, lon}`, tal como lo elige el servidor. */
+export interface GeoPoint {
+  readonly lat: number;
+  readonly lon: number;
+}
+
+/** La altura del suelo en un punto, sobre el nivel del mar. */
+export interface TerrainSample extends GeoPoint {
+  readonly elevationM: number;
+}
+
 /** Respecto a qué mide la altitud un teléfono (docs/adr/0020). */
 export type AltitudeRef = 'msl' | 'ellipsoid';
 

@@ -4,13 +4,15 @@
 import { EnsurePool } from './application/ensure-pool.ts';
 import { GrantTester } from './application/grant-tester.ts';
 import { MatchMaps } from './application/match-maps.ts';
-import type { MapSource } from './application/ports.ts';
+import type { ElevationSource, MapSource } from './application/ports.ts';
 import { Supervisor } from './application/supervisor.ts';
 import type { Config } from './infrastructure/config.ts';
 import { ConsoleLogger } from './infrastructure/console-logger.ts';
 import { FileMapSource } from './infrastructure/file-map-source.ts';
+import { FixedElevationSource } from './infrastructure/fixed-elevation-source.ts';
 import { HmacCredentials } from './infrastructure/hmac-credentials.ts';
 import { MathRandom } from './infrastructure/math-random.ts';
+import { OpenMeteoElevationSource } from './infrastructure/open-meteo-elevation-source.ts';
 import { OverpassMapSource } from './infrastructure/overpass-map-source.ts';
 import { SupabaseAccountAdmin } from './infrastructure/supabase/supabase-account-admin.ts';
 import { SupabaseBotRegistry } from './infrastructure/supabase/supabase-bot-registry.ts';
@@ -31,13 +33,16 @@ export function compose(config: Config): App {
   const source: MapSource = config.mapFile
     ? new FileMapSource(config.mapFile)
     : new OverpassMapSource(config.overpassUrl, logger);
+  const elevation: ElevationSource = config.elevationM !== null
+    ? new FixedElevationSource(config.elevationM)
+    : new OpenMeteoElevationSource(config.elevationUrl, logger);
 
   return {
     grantTester: new GrantTester(new SupabaseAccountAdmin(config.url, config.secretKey), logger),
     ensurePool: new EnsurePool(new SupabaseBotRegistry(config.url, config.secretKey), credentials, logger),
     supervisor: new Supervisor(new SupabaseGameGateway(config.url, config.publishableKey), credentials, {
       world,
-      maps: new MatchMaps(world, source, logger),
+      maps: new MatchMaps(world, source, elevation, logger),
       clock: new SystemClock(config.timeZone, config.forceHour),
       random: new MathRandom(),
       logger,

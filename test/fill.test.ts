@@ -13,8 +13,9 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { compose } from '../src/composition.ts';
 import { loadConfig } from '../src/infrastructure/config.ts';
 
-// El mapa, de un fichero: el e2e no depende de que Overpass responda.
-const config = { ...loadConfig(), mapFile: new URL('./fixtures/grid-map.json', import.meta.url).pathname };
+// El mundo de fuera, de pega: el mapa de un fichero y el terreno plano. El e2e
+// no depende de que Overpass ni Open-Meteo respondan.
+const config = { ...loadConfig(), mapFile: new URL('./fixtures/grid-map.json', import.meta.url).pathname, elevationM: 0 };
 const RUN = randomUUID().slice(0, 8);
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
 const admin = createClient(config.url, config.secretKey, options);
