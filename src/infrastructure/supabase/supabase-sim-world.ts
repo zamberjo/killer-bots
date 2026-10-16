@@ -7,7 +7,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { SimWorld } from '../../application/ports.ts';
-import type { CityMap, Reading } from '../../domain/bot.ts';
+import type { CityMap, GeoPoint, Reading, TerrainSample } from '../../domain/bot.ts';
 import type { Movement } from '../../domain/routine.ts';
 
 interface ReadingDto {
@@ -34,6 +34,21 @@ export class SupabaseSimWorld implements SimWorld {
     await this.call('sim_load_map', { p_match_id: matchId, p_ways: map.ways, p_buildings: map.buildings });
   }
 
+  async hasTerrain(matchId: string): Promise<boolean> {
+    return (await this.call<boolean>('sim_has_terrain', { p_match_id: matchId })) === true;
+  }
+
+  async elevationPoints(matchId: string): Promise<GeoPoint[]> {
+    return (await this.call<GeoPoint[]>('sim_elevation_points', { p_match_id: matchId })) ?? [];
+  }
+
+  async loadTerrain(matchId: string, samples: TerrainSample[]): Promise<number> {
+    return this.call<number>('sim_load_terrain', {
+      p_match_id: matchId,
+      p_samples: samples.map((s) => ({ lat: s.lat, lon: s.lon, elevation_m: s.elevationM })),
+    });
+  }
+
   async spawn(playerId: string): Promise<Reading> {
     return toReading(await this.call<ReadingDto>('sim_spawn', { p_player_id: playerId }));
   }
@@ -52,8 +67,9 @@ export class SupabaseSimWorld implements SimWorld {
 }
 
 // El mundo simulado da la altitud sobre el nivel del mar, con ±1 m de ruido
-// (`sim.step`): el bot la declara como un iPhone, MSL y con una precisión
-// vertical honrada de 4 m (docs/adr/0020). No sigue el terreno: ver TODO §22.
+// (`sim.reading`): la del suelo más 1,5 m si la partida tiene terreno, o una
+// fija si no. El bot la declara como un iPhone, MSL y con una precisión
+// vertical honrada de 4 m (docs/adr/0020).
 const SIM_ALTITUDE_ACCURACY_M = 4;
 
 function toReading(r: ReadingDto): Reading {

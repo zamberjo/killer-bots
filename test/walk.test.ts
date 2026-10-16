@@ -7,8 +7,12 @@
 // `rpc_report_position`, que las valida como las de cualquiera. A uno se le
 // coloca fuera de la zona antes de empezar: el servidor se lo dice y vuelve.
 //
+// El terreno es una altura fija (TERRAIN_M): los bots la siguen, y el humano,
+// que es probador, la ve en la vista de pruebas (docs/TODO.md §22).
+//
 // La clave de servicio solo prepara y limpia (adelantar la ventana, colocar al
-// bot, borrar al humano): ninguna aserción se hace con ella.
+// bot, dar el rol de probador, borrar al humano): ninguna aserción se hace con
+// ella.
 
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -26,7 +30,10 @@ const ZONE = {
 // ~25 m al este del borde de la zona: más que el error del GPS simulado.
 const OUTSIDE = { lat: 37.99, lon: -1.10972 };
 
-const config = { ...loadConfig(), mapFile: MAP_FILE, forceHour: 11, tickMs: 1000 };
+// Lejos de los ~20 m de la altitud fija de un bot sin terreno.
+const TERRAIN_M = 560;
+
+const config = { ...loadConfig(), mapFile: MAP_FILE, elevationM: TERRAIN_M, forceHour: 11, tickMs: 1000 };
 const RUN = randomUUID().slice(0, 8);
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
 const admin = createClient(config.url, config.secretKey, options);
@@ -55,6 +62,8 @@ before(async () => {
   });
   if (error || !data.user) throw new Error(`Alta del humano: ${error?.message}`);
   hostId = data.user.id;
+  const { error: testerError } = await admin.auth.admin.updateUserById(hostId, { app_metadata: { is_tester: true } });
+  if (testerError) throw new Error(`Rol de probador: ${testerError.message}`);
 });
 
 after(async () => {
@@ -117,6 +126,16 @@ test('de día, los bots pasean por las calles y el que se sale vuelve', async ()
   assert.equal(walker.lastOutcome?.inZone, true, 'paseando, dentro de la zona');
   assertNoTeleports(walker);
   assertNoTeleports(stray);
+
+  // --- Sobre el terreno: el suelo más el teléfono en la mano (1,5 m ± 1) -----
+  const { data: positions, error: viewError } = await host.rpc('rpc_get_bot_positions', { p_match_id: matchId });
+  assert.equal(viewError, null, viewError?.message);
+  const altitudes = (positions as { altitude_m: number | null }[]).map((p) => p.altitude_m);
+  assert.equal(altitudes.length, 2);
+  for (const altitude of altitudes) {
+    assert.ok(altitude !== null && Math.abs(altitude - (TERRAIN_M + 1.5)) <= 1.01,
+      `la altitud del bot (${altitude} m) es la del terreno, no la fija`);
+  }
 });
 
 /** Ninguna lectura de un bot parece un teletransporte: anda como una persona. */

@@ -3,7 +3,7 @@
 // (`src/composition.ts`) los conecta.
 
 import type {
-  BotProfile, CityMap, MatchAssignment, MatchStatus, Reading, ReportOutcome, Zone,
+  BotProfile, CityMap, GeoPoint, MatchAssignment, MatchStatus, Reading, ReportOutcome, TerrainSample, Zone,
 } from '../domain/bot.ts';
 import type { LocalTime, Movement } from '../domain/routine.ts';
 
@@ -58,6 +58,11 @@ export interface MatchWatch {
 export interface SimWorld {
   hasMap(matchId: string): Promise<boolean>;
   loadMap(matchId: string, map: CityMap): Promise<void>;
+  hasTerrain(matchId: string): Promise<boolean>;
+  /** Los puntos de la zona cuya altura necesita el servidor. Los elige él. */
+  elevationPoints(matchId: string): Promise<GeoPoint[]>;
+  /** Guarda las alturas; devuelve cuántas se quedó. Idempotente. */
+  loadTerrain(matchId: string, samples: TerrainSample[]): Promise<number>;
   /** Pone al bot en el mapa (una casa, la calle más cercana). Idempotente. */
   spawn(playerId: string): Promise<Reading>;
   /** Mueve al bot `meters` según `movement` y devuelve la lectura de su GPS. */
@@ -68,6 +73,16 @@ export interface SimWorld {
 export interface MapSource {
   /** Un mapa vacío si no hay datos: entonces los bots pasean en recto. */
   fetch(zone: Zone): Promise<CityMap>;
+}
+
+/** Un modelo de elevación del terreno. */
+export interface ElevationSource {
+  /**
+   * La altura sobre el nivel del mar de cada punto, en el mismo orden (null
+   * donde no tenga dato), o null si no responde: entonces los bots no siguen
+   * el terreno, pero pasean igual.
+   */
+  fetch(points: readonly GeoPoint[]): Promise<(number | null)[] | null>;
 }
 
 /** La hora: la real, para las lecturas, y la local, para la rutina. */

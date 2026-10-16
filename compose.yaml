@@ -18,10 +18,13 @@ x-bots: &bots
     BOTS_POLL_MS: ${BOTS_POLL_MS:-15000}
     BOTS_TICK_MS: ${BOTS_TICK_MS:-20000}
     BOTS_TIMEZONE: ${BOTS_TIMEZONE:-Europe/Madrid}
-    # Vacías = sin forzar: la hora real y el mapa de OpenStreetMap.
+    # Vacías = sin forzar: la hora real, el mapa de OpenStreetMap y el terreno
+    # de Open-Meteo.
     BOTS_FORCE_HOUR: ${BOTS_FORCE_HOUR:-}
     BOTS_MAP_FILE: ${BOTS_MAP_FILE:-}
     BOTS_OVERPASS_URL: ${BOTS_OVERPASS_URL:-https://overpass-api.de/api/interpreter}
+    BOTS_ELEVATION_M: ${BOTS_ELEVATION_M:-}
+    BOTS_ELEVATION_URL: ${BOTS_ELEVATION_URL:-https://api.open-meteo.com/v1/elevation}
   # El código se monta: un cambio en src/ o test/ no obliga a reconstruir.
   volumes:
     - ./src:/app/src:ro

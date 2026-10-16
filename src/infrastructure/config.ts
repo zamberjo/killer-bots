@@ -26,6 +26,9 @@ export interface Config {
   /** Mapa de un fichero en vez de Overpass (pruebas, sin red), o null. */
   mapFile: string | null;
   overpassUrl: string;
+  /** La misma altura del suelo en todas partes (pruebas, sin red), o null. */
+  elevationM: number | null;
+  elevationUrl: string;
 }
 
 function readStatus(backendDir: string): Record<string, string> {
@@ -81,5 +84,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     forceHour: env.BOTS_FORCE_HOUR ? Number(env.BOTS_FORCE_HOUR) : null,
     mapFile: env.BOTS_MAP_FILE ?? null,
     overpassUrl: env.BOTS_OVERPASS_URL ?? 'https://overpass-api.de/api/interpreter',
+    elevationM: env.BOTS_ELEVATION_M ? Number(env.BOTS_ELEVATION_M) : null,
+    elevationUrl: env.BOTS_ELEVATION_URL ?? 'https://api.open-meteo.com/v1/elevation',
   };
 }
