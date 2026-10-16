@@ -26,12 +26,18 @@ export interface CityMap {
   readonly buildings: ReadonlyArray<readonly [number, number]>;
 }
 
+/** Respecto a qué mide la altitud un teléfono (docs/adr/0020). */
+export type AltitudeRef = 'msl' | 'ellipsoid';
+
 /** Lo que mide el «GPS» de un bot: cruda, como la de un teléfono. */
 export interface Reading {
   readonly lat: number;
   readonly lon: number;
   readonly accuracyM: number;
   readonly altitudeM: number;
+  /** Precisión vertical declarada, en metros. */
+  readonly altitudeAccuracyM: number;
+  readonly altitudeRef: AltitudeRef;
 }
 
 /** Lo que responde el servidor a una lectura (`rpc_report_position`). */
